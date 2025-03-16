@@ -16,7 +16,7 @@ class NetworkController:
     def __init__(self, api_key=None):
         # Initialize the Gemini client
         self.client = genai.Client(api_key=api_key or os.environ.get("GEMINI_API_KEY"))
-        self.model = "gemini-2.0-flash-exp"  # Model with image generation capabilities
+        self.model = "gemini-2.0-flash-exp-image-generation"  # Model with image generation capabilities
         self.machines = {}
         self.ssh_connections = {}
         self.img_count = 0
@@ -120,17 +120,8 @@ class NetworkController:
     async def generate_interface(self, prompt, context=None):
         """Generate a visual interface using Gemini"""
         system_instruction = """
-        You are a specialized AI that creates informative, clear dashboards for IT and network management. 
-        Your visuals should:
-        1. Use a clean, professional design with a dark mode theme
-        2. Include all relevant system status information clearly labeled
-        3. Highlight critical information or alerts with appropriate colors (red for errors, yellow for warnings)
-        4. Use a consistent layout with proper spacing and alignment
-        5. Include a timestamp of when the data was collected
-        6. Generate text as part of the image (not separate) that's readable and properly sized
-        7. Use icons where appropriate to enhance readability
-        
-        Your UI should be complete and ready to present to users with no additional processing needed.
+        You create informative, clear dashboards for IT and network management. 
+   
         """
         
         # Format machine data for display

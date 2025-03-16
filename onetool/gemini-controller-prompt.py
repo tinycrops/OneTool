@@ -17,7 +17,7 @@ class GeminiNetworkInterface:
     def __init__(self, api_key=None):
         # Initialize the Gemini client
         self.client = genai.Client(api_key=api_key or os.environ.get("GEMINI_API_KEY"))
-        self.model = "gemini-2.0-flash-exp"  # Model with image generation capabilities
+        self.model = "gemini-2.0-flash-exp-image-generation"  # Model with image generation capabilities
         self.machines = {}
         self.img_count = 0
         self.current_prompt_state = {}
@@ -59,7 +59,7 @@ class GeminiNetworkInterface:
             self.machines[name]["status"] = "online" if reachable else "offline"
             self.machines[name]["last_checked"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    async def generate_network_interface(self, user_query=None):
+    def generate_network_interface(self, user_query=None):
         """Generate a visual interface using Gemini based on network status and user query"""
         # First, check the status of our machines
         self.check_all_machines()
@@ -122,7 +122,18 @@ class GeminiNetworkInterface:
             temperature=0.2,
             top_p=0.95,
             top_k=40,
-            response_modalities=["image"],
+            response_modalities=[
+                "image",
+                "text",
+            ],
+            max_output_tokens=8192,
+            response_mime_type="text/plain",
+            safety_settings=[
+                types.SafetySetting(
+                    category="HARM_CATEGORY_CIVIC_INTEGRITY",
+                    threshold="OFF",  # Off
+                ),
+            ],
         )
 
         # Structure the conversation for better image generation
@@ -144,7 +155,7 @@ class GeminiNetworkInterface:
         # Generate the image
         try:
             response = None
-            async for chunk in self.client.aio.models.generate_content_stream(
+            for chunk in self.client.models.generate_content_stream(
                 model=self.model,
                 contents=contents,
                 config=generate_content_config,
@@ -175,13 +186,13 @@ class GeminiNetworkInterface:
             return None, str(e)
 
 # Example usage
-async def main():
+def main():
     # Initialize the interface
     interface = GeminiNetworkInterface()
     
     # Generate an initial dashboard visualization
     print("Generating initial network interface visualization...")
-    image_data, result = await interface.generate_network_interface(
+    image_data, result = interface.generate_network_interface(
         "Show me the status of my machines at 192.168.1.53 and 192.168.1.227"
     )
     
@@ -203,7 +214,7 @@ async def main():
     
     # Simulate user interaction with a follow-up query
     print("\nGenerating detailed view of the headless server...")
-    image_data, result = await interface.generate_network_interface(
+    image_data, result = interface.generate_network_interface(
         "Show me detailed information about the headless server including current status and available operations"
     )
     
@@ -224,4 +235,4 @@ async def main():
         print(f"Failed to generate detailed view: {result}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
